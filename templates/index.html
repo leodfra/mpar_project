@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Vacancies Scraper · Recursos Humanos</title>
+
+  <!-- Tailwind JIT CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root{
+      --brand:#0050A0;
+      --brand-dark:#003b70;
+    }
+  </style>
+</head>
+<body class="flex flex-col min-h-screen bg-white text-slate-800 antialiased">
+
+  <!-- NAVBAR -->
+  <nav class="bg-[var(--brand)] shadow-md">
+    <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+      <div class="flex items-center gap-4">
+        <div class="flex items-center justify-center h-10 w-10 bg-white rounded-full shadow-sm">
+          <span class="text-[var(--brand)] font-extrabold text-lg">VS</span>
+        </div>
+        <span class="hidden sm:block text-2xl font-semibold text-white tracking-wide">Vacancies Scraper</span>
+      </div>
+      <span class="text-sm text-white/80">Human Forward</span>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <header class="bg-gradient-to-r from-[#E8F2FF] to-[#F3F8FF] py-20 px-4 text-center">
+    <h1 class="text-4xl md:text-5xl font-bold text-[var(--brand)] mb-4 leading-tight">
+      Automatizá tu búsqueda de talento
+    </h1>
+    <p class="max-w-2xl mx-auto text-lg text-slate-600">
+      Extraé vacantes de los portales líderes y descargá tu informe personalizado al instante.
+    </p>
+  </header>
+
+  <!-- FORM -->
+  <main class="flex-1 max-w-3xl mx-auto px-6 py-12 w-full">
+    <form id="scrape-form" class="bg-white border border-slate-100 rounded-2xl shadow-lg p-10 space-y-10">
+
+      <!-- ALERTA CAMPOS COMPU-TRABAJO -->
+      <div id="ct-alert"
+           class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative"
+           role="alert"></div>
+
+      <!-- ALERTA RESULTADO / DESCARGA -->
+      <div id="result-alert"
+           class="hidden px-4 py-3 rounded relative"
+           role="alert"></div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <!-- PORTAL -->
+        <div>
+          <label for="portal-select" class="block mb-2 font-medium text-slate-700">Portal de empleo</label>
+          <select id="portal-select"
+                  class="w-full border border-slate-300 rounded-md p-3 focus:ring-2 focus:ring-[var(--brand)]">
+            <option value="mpar">ManPower</option>
+            <option value="bumeran">Bumeran</option>
+            <option value="zonajobs">ZonaJobs</option>
+            <option value="computrabajo">CompuTrabajo</option>
+          </select>
+        </div>
+
+        <!-- FORMATO -->
+        <div>
+          <label for="format-select" class="block mb-2 font-medium text-slate-700">Formato de descarga</label>
+          <select id="format-select"
+                  class="w-full border border-slate-300 rounded-md p-3 focus:ring-2 focus:ring-[var(--brand)]">
+            <option value="json">JSON</option>
+            <option value="excel">Excel</option>
+          </select>
+        </div>
+
+        <!-- CARGO -->
+        <div>
+          <label for="ct-cargo" class="block mb-2 font-medium text-slate-700">Cargo / Categoría</label>
+          <input id="ct-cargo" type="text" placeholder="Ej: Desarrollador Java"
+                 class="w-full border border-slate-300 rounded-md p-3 focus:ring-2 focus:ring-[var(--brand)]" />
+        </div>
+
+        <!-- UBICACIÓN -->
+        <div>
+          <label for="ct-ubicacion" class="block mb-2 font-medium text-slate-700">Ubicación</label>
+          <input id="ct-ubicacion" type="text" placeholder="Ej: Buenos Aires"
+                 class="w-full border border-slate-300 rounded-md p-3 focus:ring-2 focus:ring-[var(--brand)]" />
+        </div>
+      </div>
+
+      <!-- BOTONES -->
+      <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <button id="scrape-btn" type="submit"
+                class="w-full sm:w-auto px-6 py-3 bg-[var(--brand)] text-white rounded-md font-semibold hover:bg-[var(--brand-dark)] transition shadow-md disabled:opacity-50 disabled:cursor-not-allowed">
+          Iniciar scraping
+        </button>
+        <button id="stop-btn" type="button" disabled
+                class="w-full sm:w-auto px-6 py-3 bg-red-600 text-white rounded-md font-semibold hover:bg-red-700 transition shadow-md disabled:opacity-50 disabled:cursor-not-allowed">
+          Detener scraping
+        </button>
+      </div>
+
+      <!-- LOADER -->
+      <div id="loader" class="flex justify-center hidden">
+        <svg class="animate-spin h-8 w-8 text-[var(--brand)]"
+             xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
+        </svg>
+      </div>
+
+      <!-- ANCLA DESCARGA -->
+      <a id="download-btn" class="hidden"></a>
+    </form>
+  </main>
+
+  <!-- INFO -->
+  <section class="bg-slate-50 py-12 px-4 text-center">
+    <div class="max-w-4xl mx-auto space-y-4">
+      <h2 class="text-2xl font-semibold text-[var(--brand)]">Human Forward</h2>
+      <p class="leading-relaxed text-slate-600">
+        Vacantes descargadas desde: <span id="source-name" class="font-semibold"></span>
+      </p>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="bg-[var(--brand)] text-white text-center py-4 text-sm">
+    © 2025 Vacancies Scraper · Human Forward
+  </footer>
+
+<!-- JS -->
+<script>
+/* ---------- cache DOM ---------- */
+const siteSel    = document.getElementById('portal-select');
+const fmtSel     = document.getElementById('format-select');
+const start      = document.getElementById('scrape-btn');
+const stop       = document.getElementById('stop-btn');
+const dl         = document.getElementById('download-btn');
+const loader     = document.getElementById('loader');
+const ctCargo    = document.getElementById('ct-cargo');
+const ctUbi      = document.getElementById('ct-ubicacion');
+const ctAlert    = document.getElementById('ct-alert');
+const resultAlert= document.getElementById('result-alert');
+const sourceName = document.getElementById('source-name');
+
+let jobId = null, poll = null;
+
+/* ---------- UI helpers ---------- */
+function ui({working=false} = {}){
+  start.disabled = working;
+  stop.disabled  = !working;
+  loader.classList.toggle('hidden', !working);
+  if (working){
+    dl.classList.add('opacity-50','cursor-not-allowed');
+    dl.setAttribute('disabled','');
+  }else{
+    dl.classList.remove('opacity-50','cursor-not-allowed');
+    dl.removeAttribute('disabled');
+  }
+}
+
+function showAlert(node, type, msg){
+  /* type: info|ok|error */
+  const palette = {
+    info : ['bg-yellow-100','border-yellow-400','text-yellow-700'],
+    ok   : ['bg-green-100','border-green-400','text-green-700'],
+    error: ['bg-red-100','border-red-400','text-red-700'],
+  }[type] || ['bg-gray-100','border-gray-400','text-gray-700'];
+
+  node.className = `mb-4 px-4 py-3 rounded border ${palette.join(' ')}`;
+  node.textContent = msg;
+  node.classList.remove('hidden');
+  setTimeout(()=>node.classList.add('hidden'), 6000);
+}
+
+/* ---------- validaciones portal ---------- */
+function toggleInputAvailability(){
+  const need = siteSel.value === 'computrabajo';
+  ctCargo.required = ctUbi.required = need;
+  ctCargo.classList.toggle('ring-2', need && !ctCargo.value.trim());
+  ctUbi  .classList.toggle('ring-2', need && !ctUbi.value.trim());
+}
+
+function updateCTConstraints(){
+  if (siteSel.value === 'computrabajo'){
+    ctAlert.textContent = 'Para CompuTrabajo debes completar Cargo y Ubicación.';
+    ctAlert.classList.remove('hidden');
+    start.disabled = !(ctCargo.value.trim() && ctUbi.value.trim());
+  }else{
+    ctAlert.classList.add('hidden');
+    start.disabled = false;
+  }
+  toggleInputAvailability();
+}
+
+function updateSourceName(){
+  sourceName.textContent = siteSel.options[siteSel.selectedIndex].textContent.trim();
+}
+
+/* ---------- event listeners ---------- */
+siteSel.addEventListener('change', ()=>{
+  updateCTConstraints(); updateSourceName();
+});
+ctCargo.addEventListener('input', updateCTConstraints);
+ctUbi  .addEventListener('input', updateCTConstraints);
+
+document.getElementById('scrape-form').addEventListener('submit', async e=>{
+  e.preventDefault();
+  if (siteSel.value === 'computrabajo' && (!ctCargo.value.trim() || !ctUbi.value.trim())) return;
+
+  if (poll) clearInterval(poll);
+  ui({working:true});
+  resultAlert.classList.add('hidden');   // limpia alertas previas
+
+  const payload = {
+    sitio: siteSel.value,
+    formato: fmtSel.value,
+    cargo: ctCargo.value.trim(),
+    ubicacion: ctUbi.value.trim()
+  };
+
+  const res = await fetch('/scrape',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify(payload)
+  });
+  if (!res.ok){
+    showAlert(resultAlert,'error','No se pudo iniciar el scraping.');
+    ui(); return;
+  }
+  const {job_id} = await res.json();
+  jobId = job_id; stop.dataset.jobId = jobId;
+  pollReady(fmtSel.value);
+});
+
+stop.addEventListener('click', async ()=>{
+  if (!jobId) return;
+  await fetch('/stop-scrape',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({job_id:jobId})
+  });
+  stop.disabled = true;
+  ui();
+});
+
+/* ---------- polling ---------- */
+function pollReady(fmt){
+  const ext   = fmt === 'excel' ? 'xlsx':'json';
+  const portal= siteSel.options[siteSel.selectedIndex].textContent.trim().toLowerCase().replace(/\s+/g,'_');
+  const fname = `vacantes_${portal}.${ext}`;
+  const query = '?fmt='+fmt;
+
+  updateSourceName();
+
+  poll = setInterval(async ()=>{
+    const head = await fetch(`/download/${jobId}${query}`,{method:'HEAD'});
+    if (head.status === 404) return;          // aún trabajando
+    if (head.status === 204){                 // sin datos
+      clearInterval(poll); poll=null; ui();
+      showAlert(resultAlert,'info','La búsqueda no arrojó resultados.');
+      return;
+    }
+    if (head.status !== 200){ return; }
+
+    clearInterval(poll); poll=null;
+
+    const fileRes = await fetch(`/download/${jobId}${query}`);
+    if (!fileRes.ok){
+      showAlert(resultAlert,'error','Descarga falló.'); ui(); return;
+    }
+    const blob = await fileRes.blob();
+    const url  = URL.createObjectURL(blob);
+    dl.href = url; dl.download = fname;
+    ui(); dl.click(); URL.revokeObjectURL(url);
+    showAlert(resultAlert,'ok','Descarga iniciada correctamente.');
+  },3000);
+}
+
+/* ---------- init ---------- */
+updateSourceName(); updateCTConstraints(); ui();
+</script>
+</body>
+</html>

@@ -1,0 +1,7 @@
+playwright>=1.38.0
+boto3             # Si usás AWS S3 (como en tu ejemplo)
+Flask             # Si usás backend API/web
+python-dotenv     # Para manejar variables de entorno en local
+pandas
+openpyxl
+typing
